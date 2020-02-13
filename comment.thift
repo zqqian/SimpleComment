@@ -1,0 +1,6 @@
+namespace go comment
+
+service Comment {
+    bool add(1: string name,2:string content),
+    string get()
+}
