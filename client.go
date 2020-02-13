@@ -36,13 +36,18 @@ func getcomment()  {
 		fmt.Println("failed. err: [%v]", err)
 		return
 	}
-	var commentlist string
-	commentlist,err=client.Get()
+	var r []*comment.Com
+	r,err=client.Get()
 	if err!=nil{
 		fmt.Println("failed. err: [%v]", err)
 		return
 	}
-	println(commentlist)
+	for _,s :=range r  {
+	println(s.Username)
+	println(s.Content)
+	println(s.Id)
+	println(s.Time)
+	}
 }
 func runClient() (*comment.CommentClient,error) {
 	transportFactory := thrift.NewTBufferedTransportFactory(8192)

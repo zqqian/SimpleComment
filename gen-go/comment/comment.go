@@ -19,7 +19,7 @@ type Comment interface {
 	//  - Name
 	//  - Content
 	Add(name string, content string) (r bool, err error)
-	Get() (r string, err error)
+	Get() (r []*Com, err error)
 }
 
 type CommentClient struct {
@@ -119,7 +119,7 @@ func (p *CommentClient) recvAdd() (value bool, err error) {
 	return
 }
 
-func (p *CommentClient) Get() (r string, err error) {
+func (p *CommentClient) Get() (r []*Com, err error) {
 	if err = p.sendGet(); err != nil {
 		return
 	}
@@ -146,7 +146,7 @@ func (p *CommentClient) sendGet() (err error) {
 	return oprot.Flush()
 }
 
-func (p *CommentClient) recvGet() (value string, err error) {
+func (p *CommentClient) recvGet() (value []*Com, err error) {
 	iprot := p.InputProtocol
 	if iprot == nil {
 		iprot = p.ProtocolFactory.GetProtocol(p.Transport)
@@ -295,7 +295,7 @@ func (p *commentProcessorGet) Process(seqId int32, iprot, oprot thrift.TProtocol
 
 	iprot.ReadMessageEnd()
 	result := GetResult{}
-	var retval string
+	var retval []*Com
 	var err2 error
 	if retval, err2 = p.handler.Get(); err2 != nil {
 		x := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing get: "+err2.Error())
@@ -305,7 +305,7 @@ func (p *commentProcessorGet) Process(seqId int32, iprot, oprot thrift.TProtocol
 		oprot.Flush()
 		return true, err2
 	} else {
-		result.Success = &retval
+		result.Success = retval
 	}
 	if err2 = oprot.WriteMessageBegin("get", thrift.REPLY, seqId); err2 != nil {
 		err = err2
@@ -601,20 +601,17 @@ func (p *GetArgs) String() string {
 }
 
 type GetResult struct {
-	Success *string `thrift:"success,0" json:"success"`
+	Success []*Com `thrift:"success,0" json:"success"`
 }
 
 func NewGetResult() *GetResult {
 	return &GetResult{}
 }
 
-var GetResult_Success_DEFAULT string
+var GetResult_Success_DEFAULT []*Com
 
-func (p *GetResult) GetSuccess() string {
-	if !p.IsSetSuccess() {
-		return GetResult_Success_DEFAULT
-	}
-	return *p.Success
+func (p *GetResult) GetSuccess() []*Com {
+	return p.Success
 }
 func (p *GetResult) IsSetSuccess() bool {
 	return p.Success != nil
@@ -653,10 +650,21 @@ func (p *GetResult) Read(iprot thrift.TProtocol) error {
 }
 
 func (p *GetResult) ReadField0(iprot thrift.TProtocol) error {
-	if v, err := iprot.ReadString(); err != nil {
-		return fmt.Errorf("error reading field 0: %s", err)
-	} else {
-		p.Success = &v
+	_, size, err := iprot.ReadListBegin()
+	if err != nil {
+		return fmt.Errorf("error reading list begin: %s", err)
+	}
+	tSlice := make([]*Com, 0, size)
+	p.Success = tSlice
+	for i := 0; i < size; i++ {
+		_elem6 := &Com{}
+		if err := _elem6.Read(iprot); err != nil {
+			return fmt.Errorf("%T error reading struct: %s", _elem6, err)
+		}
+		p.Success = append(p.Success, _elem6)
+	}
+	if err := iprot.ReadListEnd(); err != nil {
+		return fmt.Errorf("error reading list end: %s", err)
 	}
 	return nil
 }
@@ -679,11 +687,19 @@ func (p *GetResult) Write(oprot thrift.TProtocol) error {
 
 func (p *GetResult) writeField0(oprot thrift.TProtocol) (err error) {
 	if p.IsSetSuccess() {
-		if err := oprot.WriteFieldBegin("success", thrift.STRING, 0); err != nil {
+		if err := oprot.WriteFieldBegin("success", thrift.LIST, 0); err != nil {
 			return fmt.Errorf("%T write field begin error 0:success: %s", p, err)
 		}
-		if err := oprot.WriteString(string(*p.Success)); err != nil {
-			return fmt.Errorf("%T.success (0) field write error: %s", p, err)
+		if err := oprot.WriteListBegin(thrift.STRUCT, len(p.Success)); err != nil {
+			return fmt.Errorf("error writing list begin: %s", err)
+		}
+		for _, v := range p.Success {
+			if err := v.Write(oprot); err != nil {
+				return fmt.Errorf("%T error writing struct: %s", v, err)
+			}
+		}
+		if err := oprot.WriteListEnd(); err != nil {
+			return fmt.Errorf("error writing list end: %s", err)
 		}
 		if err := oprot.WriteFieldEnd(); err != nil {
 			return fmt.Errorf("%T write field end error 0:success: %s", p, err)

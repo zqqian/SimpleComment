@@ -21,7 +21,7 @@ func Usage() {
 	flag.PrintDefaults()
 	fmt.Fprintln(os.Stderr, "\nFunctions:")
 	fmt.Fprintln(os.Stderr, "  bool add(string name, string content)")
-	fmt.Fprintln(os.Stderr, "  string get()")
+	fmt.Fprintln(os.Stderr, "   get()")
 	fmt.Fprintln(os.Stderr)
 	os.Exit(0)
 }
