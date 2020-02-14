@@ -3,7 +3,6 @@ package main
 import (
 	"SimpleComment/gen-go/comment"
 	"crypto/tls"
-	"fmt"
 	"git.apache.org/thrift.git/lib/go/thrift"
 )
 
@@ -12,7 +11,7 @@ func addcomment(username ,content string)  bool{
 
 	client,err:=	runClient()
 	if err != nil {
-		fmt.Println("failed. err: [%v]", err)
+		panic(err)
 		return false
 	}
 
@@ -20,7 +19,7 @@ func addcomment(username ,content string)  bool{
 	res,err=client.Add(username,content)
 
 	if err != nil {
-		fmt.Println(" failed. err: [%v]", err)
+		panic(err)
 		return false
 	}
 	if(res){
@@ -29,25 +28,20 @@ func addcomment(username ,content string)  bool{
 		return false
 	}
 }
-func getcomment()  {
+func getcomment() ([]*comment.Com,error) {
 
 	client,err:=	runClient()
 	if err != nil {
-		fmt.Println("failed. err: [%v]", err)
-		return
+		panic(err)
+		return nil,err
 	}
 	var r []*comment.Com
 	r,err=client.Get()
 	if err!=nil{
-		fmt.Println("failed. err: [%v]", err)
-		return
+		panic(err)
+		return nil,err
 	}
-	for _,s :=range r  {
-	println(s.Username)
-	println(s.Content)
-	println(s.Id)
-	println(s.Time)
-	}
+	return r,nil
 }
 func runClient() (*comment.CommentClient,error) {
 	transportFactory := thrift.NewTBufferedTransportFactory(8192)
@@ -65,20 +59,30 @@ func runClient() (*comment.CommentClient,error) {
 		transport, err = thrift.NewTSocket(addr)
 	}
 	if err != nil {
-		fmt.Println("Error opening socket:", err)
+		panic(err)
 		return nil,err
 	}
 	transport = transportFactory.GetTransport(transport)
 	if err := transport.Open(); err != nil {
-		fmt.Println("Error opening socket:", err)
+		panic(err)
 		return nil,err
 	}
 	return comment.NewCommentClientFactory(transport, protocolFactory),nil
 }
 func main() {
 
-addcomment("testuser","tset a comment")
+	addcomment("testuser","tset a comment")
 
-getcomment()
+ 	r,err :=getcomment()
+
+	 if err!=nil{
+		panic(err)
+	}
+	for _,s:=range r {
+		println(s.Username)
+		println(s.Content)
+		println(s.Id)
+		println(s.Time)
+	}
 
 }
