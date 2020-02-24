@@ -16,9 +16,11 @@ var _ = bytes.Equal
 
 type Comment interface {
 	// Parameters:
-	//  - Name
-	//  - Content
-	Add(name string, content string) (r bool, err error)
+	//  - C
+	AddComment(c *Com) (r bool, err error)
+	// Parameters:
+	//  - CommentId
+	DeleteComment(comment_id int32) (r bool, err error)
 	Get() (r []*Com, err error)
 }
 
@@ -49,28 +51,26 @@ func NewCommentClientProtocol(t thrift.TTransport, iprot thrift.TProtocol, oprot
 }
 
 // Parameters:
-//  - Name
-//  - Content
-func (p *CommentClient) Add(name string, content string) (r bool, err error) {
-	if err = p.sendAdd(name, content); err != nil {
+//  - C
+func (p *CommentClient) AddComment(c *Com) (r bool, err error) {
+	if err = p.sendAddComment(c); err != nil {
 		return
 	}
-	return p.recvAdd()
+	return p.recvAddComment()
 }
 
-func (p *CommentClient) sendAdd(name string, content string) (err error) {
+func (p *CommentClient) sendAddComment(c *Com) (err error) {
 	oprot := p.OutputProtocol
 	if oprot == nil {
 		oprot = p.ProtocolFactory.GetProtocol(p.Transport)
 		p.OutputProtocol = oprot
 	}
 	p.SeqId++
-	if err = oprot.WriteMessageBegin("add", thrift.CALL, p.SeqId); err != nil {
+	if err = oprot.WriteMessageBegin("addComment", thrift.CALL, p.SeqId); err != nil {
 		return
 	}
-	args := AddArgs{
-		Name:    name,
-		Content: content,
+	args := AddCommentArgs{
+		C: c,
 	}
 	if err = args.Write(oprot); err != nil {
 		return
@@ -81,7 +81,7 @@ func (p *CommentClient) sendAdd(name string, content string) (err error) {
 	return oprot.Flush()
 }
 
-func (p *CommentClient) recvAdd() (value bool, err error) {
+func (p *CommentClient) recvAddComment() (value bool, err error) {
 	iprot := p.InputProtocol
 	if iprot == nil {
 		iprot = p.ProtocolFactory.GetProtocol(p.Transport)
@@ -105,10 +105,79 @@ func (p *CommentClient) recvAdd() (value bool, err error) {
 		return
 	}
 	if p.SeqId != seqId {
-		err = thrift.NewTApplicationException(thrift.BAD_SEQUENCE_ID, "add failed: out of sequence response")
+		err = thrift.NewTApplicationException(thrift.BAD_SEQUENCE_ID, "addComment failed: out of sequence response")
 		return
 	}
-	result := AddResult{}
+	result := AddCommentResult{}
+	if err = result.Read(iprot); err != nil {
+		return
+	}
+	if err = iprot.ReadMessageEnd(); err != nil {
+		return
+	}
+	value = result.GetSuccess()
+	return
+}
+
+// Parameters:
+//  - CommentId
+func (p *CommentClient) DeleteComment(comment_id int32) (r bool, err error) {
+	if err = p.sendDeleteComment(comment_id); err != nil {
+		return
+	}
+	return p.recvDeleteComment()
+}
+
+func (p *CommentClient) sendDeleteComment(comment_id int32) (err error) {
+	oprot := p.OutputProtocol
+	if oprot == nil {
+		oprot = p.ProtocolFactory.GetProtocol(p.Transport)
+		p.OutputProtocol = oprot
+	}
+	p.SeqId++
+	if err = oprot.WriteMessageBegin("deleteComment", thrift.CALL, p.SeqId); err != nil {
+		return
+	}
+	args := DeleteCommentArgs{
+		CommentId: comment_id,
+	}
+	if err = args.Write(oprot); err != nil {
+		return
+	}
+	if err = oprot.WriteMessageEnd(); err != nil {
+		return
+	}
+	return oprot.Flush()
+}
+
+func (p *CommentClient) recvDeleteComment() (value bool, err error) {
+	iprot := p.InputProtocol
+	if iprot == nil {
+		iprot = p.ProtocolFactory.GetProtocol(p.Transport)
+		p.InputProtocol = iprot
+	}
+	_, mTypeId, seqId, err := iprot.ReadMessageBegin()
+	if err != nil {
+		return
+	}
+	if mTypeId == thrift.EXCEPTION {
+		error2 := thrift.NewTApplicationException(thrift.UNKNOWN_APPLICATION_EXCEPTION, "Unknown Exception")
+		var error3 error
+		error3, err = error2.Read(iprot)
+		if err != nil {
+			return
+		}
+		if err = iprot.ReadMessageEnd(); err != nil {
+			return
+		}
+		err = error3
+		return
+	}
+	if p.SeqId != seqId {
+		err = thrift.NewTApplicationException(thrift.BAD_SEQUENCE_ID, "deleteComment failed: out of sequence response")
+		return
+	}
+	result := DeleteCommentResult{}
 	if err = result.Read(iprot); err != nil {
 		return
 	}
@@ -157,16 +226,16 @@ func (p *CommentClient) recvGet() (value []*Com, err error) {
 		return
 	}
 	if mTypeId == thrift.EXCEPTION {
-		error2 := thrift.NewTApplicationException(thrift.UNKNOWN_APPLICATION_EXCEPTION, "Unknown Exception")
-		var error3 error
-		error3, err = error2.Read(iprot)
+		error4 := thrift.NewTApplicationException(thrift.UNKNOWN_APPLICATION_EXCEPTION, "Unknown Exception")
+		var error5 error
+		error5, err = error4.Read(iprot)
 		if err != nil {
 			return
 		}
 		if err = iprot.ReadMessageEnd(); err != nil {
 			return
 		}
-		err = error3
+		err = error5
 		return
 	}
 	if p.SeqId != seqId {
@@ -204,10 +273,11 @@ func (p *CommentProcessor) ProcessorMap() map[string]thrift.TProcessorFunction {
 
 func NewCommentProcessor(handler Comment) *CommentProcessor {
 
-	self4 := &CommentProcessor{handler: handler, processorMap: make(map[string]thrift.TProcessorFunction)}
-	self4.processorMap["add"] = &commentProcessorAdd{handler: handler}
-	self4.processorMap["get"] = &commentProcessorGet{handler: handler}
-	return self4
+	self6 := &CommentProcessor{handler: handler, processorMap: make(map[string]thrift.TProcessorFunction)}
+	self6.processorMap["addComment"] = &commentProcessorAddComment{handler: handler}
+	self6.processorMap["deleteComment"] = &commentProcessorDeleteComment{handler: handler}
+	self6.processorMap["get"] = &commentProcessorGet{handler: handler}
+	return self6
 }
 
 func (p *CommentProcessor) Process(iprot, oprot thrift.TProtocol) (success bool, err thrift.TException) {
@@ -220,25 +290,25 @@ func (p *CommentProcessor) Process(iprot, oprot thrift.TProtocol) (success bool,
 	}
 	iprot.Skip(thrift.STRUCT)
 	iprot.ReadMessageEnd()
-	x5 := thrift.NewTApplicationException(thrift.UNKNOWN_METHOD, "Unknown function "+name)
+	x7 := thrift.NewTApplicationException(thrift.UNKNOWN_METHOD, "Unknown function "+name)
 	oprot.WriteMessageBegin(name, thrift.EXCEPTION, seqId)
-	x5.Write(oprot)
+	x7.Write(oprot)
 	oprot.WriteMessageEnd()
 	oprot.Flush()
-	return false, x5
+	return false, x7
 
 }
 
-type commentProcessorAdd struct {
+type commentProcessorAddComment struct {
 	handler Comment
 }
 
-func (p *commentProcessorAdd) Process(seqId int32, iprot, oprot thrift.TProtocol) (success bool, err thrift.TException) {
-	args := AddArgs{}
+func (p *commentProcessorAddComment) Process(seqId int32, iprot, oprot thrift.TProtocol) (success bool, err thrift.TException) {
+	args := AddCommentArgs{}
 	if err = args.Read(iprot); err != nil {
 		iprot.ReadMessageEnd()
 		x := thrift.NewTApplicationException(thrift.PROTOCOL_ERROR, err.Error())
-		oprot.WriteMessageBegin("add", thrift.EXCEPTION, seqId)
+		oprot.WriteMessageBegin("addComment", thrift.EXCEPTION, seqId)
 		x.Write(oprot)
 		oprot.WriteMessageEnd()
 		oprot.Flush()
@@ -246,12 +316,12 @@ func (p *commentProcessorAdd) Process(seqId int32, iprot, oprot thrift.TProtocol
 	}
 
 	iprot.ReadMessageEnd()
-	result := AddResult{}
+	result := AddCommentResult{}
 	var retval bool
 	var err2 error
-	if retval, err2 = p.handler.Add(args.Name, args.Content); err2 != nil {
-		x := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing add: "+err2.Error())
-		oprot.WriteMessageBegin("add", thrift.EXCEPTION, seqId)
+	if retval, err2 = p.handler.AddComment(args.C); err2 != nil {
+		x := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing addComment: "+err2.Error())
+		oprot.WriteMessageBegin("addComment", thrift.EXCEPTION, seqId)
 		x.Write(oprot)
 		oprot.WriteMessageEnd()
 		oprot.Flush()
@@ -259,7 +329,55 @@ func (p *commentProcessorAdd) Process(seqId int32, iprot, oprot thrift.TProtocol
 	} else {
 		result.Success = &retval
 	}
-	if err2 = oprot.WriteMessageBegin("add", thrift.REPLY, seqId); err2 != nil {
+	if err2 = oprot.WriteMessageBegin("addComment", thrift.REPLY, seqId); err2 != nil {
+		err = err2
+	}
+	if err2 = result.Write(oprot); err == nil && err2 != nil {
+		err = err2
+	}
+	if err2 = oprot.WriteMessageEnd(); err == nil && err2 != nil {
+		err = err2
+	}
+	if err2 = oprot.Flush(); err == nil && err2 != nil {
+		err = err2
+	}
+	if err != nil {
+		return
+	}
+	return true, err
+}
+
+type commentProcessorDeleteComment struct {
+	handler Comment
+}
+
+func (p *commentProcessorDeleteComment) Process(seqId int32, iprot, oprot thrift.TProtocol) (success bool, err thrift.TException) {
+	args := DeleteCommentArgs{}
+	if err = args.Read(iprot); err != nil {
+		iprot.ReadMessageEnd()
+		x := thrift.NewTApplicationException(thrift.PROTOCOL_ERROR, err.Error())
+		oprot.WriteMessageBegin("deleteComment", thrift.EXCEPTION, seqId)
+		x.Write(oprot)
+		oprot.WriteMessageEnd()
+		oprot.Flush()
+		return false, err
+	}
+
+	iprot.ReadMessageEnd()
+	result := DeleteCommentResult{}
+	var retval bool
+	var err2 error
+	if retval, err2 = p.handler.DeleteComment(args.CommentId); err2 != nil {
+		x := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing deleteComment: "+err2.Error())
+		oprot.WriteMessageBegin("deleteComment", thrift.EXCEPTION, seqId)
+		x.Write(oprot)
+		oprot.WriteMessageEnd()
+		oprot.Flush()
+		return true, err2
+	} else {
+		result.Success = &retval
+	}
+	if err2 = oprot.WriteMessageBegin("deleteComment", thrift.REPLY, seqId); err2 != nil {
 		err = err2
 	}
 	if err2 = result.Write(oprot); err == nil && err2 != nil {
@@ -327,23 +445,27 @@ func (p *commentProcessorGet) Process(seqId int32, iprot, oprot thrift.TProtocol
 
 // HELPER FUNCTIONS AND STRUCTURES
 
-type AddArgs struct {
-	Name    string `thrift:"name,1" json:"name"`
-	Content string `thrift:"content,2" json:"content"`
+type AddCommentArgs struct {
+	C *Com `thrift:"c,1" json:"c"`
 }
 
-func NewAddArgs() *AddArgs {
-	return &AddArgs{}
+func NewAddCommentArgs() *AddCommentArgs {
+	return &AddCommentArgs{}
 }
 
-func (p *AddArgs) GetName() string {
-	return p.Name
+var AddCommentArgs_C_DEFAULT *Com
+
+func (p *AddCommentArgs) GetC() *Com {
+	if !p.IsSetC() {
+		return AddCommentArgs_C_DEFAULT
+	}
+	return p.C
+}
+func (p *AddCommentArgs) IsSetC() bool {
+	return p.C != nil
 }
 
-func (p *AddArgs) GetContent() string {
-	return p.Content
-}
-func (p *AddArgs) Read(iprot thrift.TProtocol) error {
+func (p *AddCommentArgs) Read(iprot thrift.TProtocol) error {
 	if _, err := iprot.ReadStructBegin(); err != nil {
 		return fmt.Errorf("%T read error: %s", p, err)
 	}
@@ -358,10 +480,6 @@ func (p *AddArgs) Read(iprot thrift.TProtocol) error {
 		switch fieldId {
 		case 1:
 			if err := p.ReadField1(iprot); err != nil {
-				return err
-			}
-		case 2:
-			if err := p.ReadField2(iprot); err != nil {
 				return err
 			}
 		default:
@@ -379,32 +497,19 @@ func (p *AddArgs) Read(iprot thrift.TProtocol) error {
 	return nil
 }
 
-func (p *AddArgs) ReadField1(iprot thrift.TProtocol) error {
-	if v, err := iprot.ReadString(); err != nil {
-		return fmt.Errorf("error reading field 1: %s", err)
-	} else {
-		p.Name = v
+func (p *AddCommentArgs) ReadField1(iprot thrift.TProtocol) error {
+	p.C = &Com{}
+	if err := p.C.Read(iprot); err != nil {
+		return fmt.Errorf("%T error reading struct: %s", p.C, err)
 	}
 	return nil
 }
 
-func (p *AddArgs) ReadField2(iprot thrift.TProtocol) error {
-	if v, err := iprot.ReadString(); err != nil {
-		return fmt.Errorf("error reading field 2: %s", err)
-	} else {
-		p.Content = v
-	}
-	return nil
-}
-
-func (p *AddArgs) Write(oprot thrift.TProtocol) error {
-	if err := oprot.WriteStructBegin("add_args"); err != nil {
+func (p *AddCommentArgs) Write(oprot thrift.TProtocol) error {
+	if err := oprot.WriteStructBegin("addComment_args"); err != nil {
 		return fmt.Errorf("%T write struct begin error: %s", p, err)
 	}
 	if err := p.writeField1(oprot); err != nil {
-		return err
-	}
-	if err := p.writeField2(oprot); err != nil {
 		return err
 	}
 	if err := oprot.WriteFieldStop(); err != nil {
@@ -416,60 +521,47 @@ func (p *AddArgs) Write(oprot thrift.TProtocol) error {
 	return nil
 }
 
-func (p *AddArgs) writeField1(oprot thrift.TProtocol) (err error) {
-	if err := oprot.WriteFieldBegin("name", thrift.STRING, 1); err != nil {
-		return fmt.Errorf("%T write field begin error 1:name: %s", p, err)
+func (p *AddCommentArgs) writeField1(oprot thrift.TProtocol) (err error) {
+	if err := oprot.WriteFieldBegin("c", thrift.STRUCT, 1); err != nil {
+		return fmt.Errorf("%T write field begin error 1:c: %s", p, err)
 	}
-	if err := oprot.WriteString(string(p.Name)); err != nil {
-		return fmt.Errorf("%T.name (1) field write error: %s", p, err)
+	if err := p.C.Write(oprot); err != nil {
+		return fmt.Errorf("%T error writing struct: %s", p.C, err)
 	}
 	if err := oprot.WriteFieldEnd(); err != nil {
-		return fmt.Errorf("%T write field end error 1:name: %s", p, err)
+		return fmt.Errorf("%T write field end error 1:c: %s", p, err)
 	}
 	return err
 }
 
-func (p *AddArgs) writeField2(oprot thrift.TProtocol) (err error) {
-	if err := oprot.WriteFieldBegin("content", thrift.STRING, 2); err != nil {
-		return fmt.Errorf("%T write field begin error 2:content: %s", p, err)
-	}
-	if err := oprot.WriteString(string(p.Content)); err != nil {
-		return fmt.Errorf("%T.content (2) field write error: %s", p, err)
-	}
-	if err := oprot.WriteFieldEnd(); err != nil {
-		return fmt.Errorf("%T write field end error 2:content: %s", p, err)
-	}
-	return err
-}
-
-func (p *AddArgs) String() string {
+func (p *AddCommentArgs) String() string {
 	if p == nil {
 		return "<nil>"
 	}
-	return fmt.Sprintf("AddArgs(%+v)", *p)
+	return fmt.Sprintf("AddCommentArgs(%+v)", *p)
 }
 
-type AddResult struct {
+type AddCommentResult struct {
 	Success *bool `thrift:"success,0" json:"success"`
 }
 
-func NewAddResult() *AddResult {
-	return &AddResult{}
+func NewAddCommentResult() *AddCommentResult {
+	return &AddCommentResult{}
 }
 
-var AddResult_Success_DEFAULT bool
+var AddCommentResult_Success_DEFAULT bool
 
-func (p *AddResult) GetSuccess() bool {
+func (p *AddCommentResult) GetSuccess() bool {
 	if !p.IsSetSuccess() {
-		return AddResult_Success_DEFAULT
+		return AddCommentResult_Success_DEFAULT
 	}
 	return *p.Success
 }
-func (p *AddResult) IsSetSuccess() bool {
+func (p *AddCommentResult) IsSetSuccess() bool {
 	return p.Success != nil
 }
 
-func (p *AddResult) Read(iprot thrift.TProtocol) error {
+func (p *AddCommentResult) Read(iprot thrift.TProtocol) error {
 	if _, err := iprot.ReadStructBegin(); err != nil {
 		return fmt.Errorf("%T read error: %s", p, err)
 	}
@@ -501,7 +593,7 @@ func (p *AddResult) Read(iprot thrift.TProtocol) error {
 	return nil
 }
 
-func (p *AddResult) ReadField0(iprot thrift.TProtocol) error {
+func (p *AddCommentResult) ReadField0(iprot thrift.TProtocol) error {
 	if v, err := iprot.ReadBool(); err != nil {
 		return fmt.Errorf("error reading field 0: %s", err)
 	} else {
@@ -510,8 +602,8 @@ func (p *AddResult) ReadField0(iprot thrift.TProtocol) error {
 	return nil
 }
 
-func (p *AddResult) Write(oprot thrift.TProtocol) error {
-	if err := oprot.WriteStructBegin("add_result"); err != nil {
+func (p *AddCommentResult) Write(oprot thrift.TProtocol) error {
+	if err := oprot.WriteStructBegin("addComment_result"); err != nil {
 		return fmt.Errorf("%T write struct begin error: %s", p, err)
 	}
 	if err := p.writeField0(oprot); err != nil {
@@ -526,7 +618,7 @@ func (p *AddResult) Write(oprot thrift.TProtocol) error {
 	return nil
 }
 
-func (p *AddResult) writeField0(oprot thrift.TProtocol) (err error) {
+func (p *AddCommentResult) writeField0(oprot thrift.TProtocol) (err error) {
 	if p.IsSetSuccess() {
 		if err := oprot.WriteFieldBegin("success", thrift.BOOL, 0); err != nil {
 			return fmt.Errorf("%T write field begin error 0:success: %s", p, err)
@@ -541,11 +633,198 @@ func (p *AddResult) writeField0(oprot thrift.TProtocol) (err error) {
 	return err
 }
 
-func (p *AddResult) String() string {
+func (p *AddCommentResult) String() string {
 	if p == nil {
 		return "<nil>"
 	}
-	return fmt.Sprintf("AddResult(%+v)", *p)
+	return fmt.Sprintf("AddCommentResult(%+v)", *p)
+}
+
+type DeleteCommentArgs struct {
+	CommentId int32 `thrift:"comment_id,1" json:"comment_id"`
+}
+
+func NewDeleteCommentArgs() *DeleteCommentArgs {
+	return &DeleteCommentArgs{}
+}
+
+func (p *DeleteCommentArgs) GetCommentId() int32 {
+	return p.CommentId
+}
+func (p *DeleteCommentArgs) Read(iprot thrift.TProtocol) error {
+	if _, err := iprot.ReadStructBegin(); err != nil {
+		return fmt.Errorf("%T read error: %s", p, err)
+	}
+	for {
+		_, fieldTypeId, fieldId, err := iprot.ReadFieldBegin()
+		if err != nil {
+			return fmt.Errorf("%T field %d read error: %s", p, fieldId, err)
+		}
+		if fieldTypeId == thrift.STOP {
+			break
+		}
+		switch fieldId {
+		case 1:
+			if err := p.ReadField1(iprot); err != nil {
+				return err
+			}
+		default:
+			if err := iprot.Skip(fieldTypeId); err != nil {
+				return err
+			}
+		}
+		if err := iprot.ReadFieldEnd(); err != nil {
+			return err
+		}
+	}
+	if err := iprot.ReadStructEnd(); err != nil {
+		return fmt.Errorf("%T read struct end error: %s", p, err)
+	}
+	return nil
+}
+
+func (p *DeleteCommentArgs) ReadField1(iprot thrift.TProtocol) error {
+	if v, err := iprot.ReadI32(); err != nil {
+		return fmt.Errorf("error reading field 1: %s", err)
+	} else {
+		p.CommentId = v
+	}
+	return nil
+}
+
+func (p *DeleteCommentArgs) Write(oprot thrift.TProtocol) error {
+	if err := oprot.WriteStructBegin("deleteComment_args"); err != nil {
+		return fmt.Errorf("%T write struct begin error: %s", p, err)
+	}
+	if err := p.writeField1(oprot); err != nil {
+		return err
+	}
+	if err := oprot.WriteFieldStop(); err != nil {
+		return fmt.Errorf("write field stop error: %s", err)
+	}
+	if err := oprot.WriteStructEnd(); err != nil {
+		return fmt.Errorf("write struct stop error: %s", err)
+	}
+	return nil
+}
+
+func (p *DeleteCommentArgs) writeField1(oprot thrift.TProtocol) (err error) {
+	if err := oprot.WriteFieldBegin("comment_id", thrift.I32, 1); err != nil {
+		return fmt.Errorf("%T write field begin error 1:comment_id: %s", p, err)
+	}
+	if err := oprot.WriteI32(int32(p.CommentId)); err != nil {
+		return fmt.Errorf("%T.comment_id (1) field write error: %s", p, err)
+	}
+	if err := oprot.WriteFieldEnd(); err != nil {
+		return fmt.Errorf("%T write field end error 1:comment_id: %s", p, err)
+	}
+	return err
+}
+
+func (p *DeleteCommentArgs) String() string {
+	if p == nil {
+		return "<nil>"
+	}
+	return fmt.Sprintf("DeleteCommentArgs(%+v)", *p)
+}
+
+type DeleteCommentResult struct {
+	Success *bool `thrift:"success,0" json:"success"`
+}
+
+func NewDeleteCommentResult() *DeleteCommentResult {
+	return &DeleteCommentResult{}
+}
+
+var DeleteCommentResult_Success_DEFAULT bool
+
+func (p *DeleteCommentResult) GetSuccess() bool {
+	if !p.IsSetSuccess() {
+		return DeleteCommentResult_Success_DEFAULT
+	}
+	return *p.Success
+}
+func (p *DeleteCommentResult) IsSetSuccess() bool {
+	return p.Success != nil
+}
+
+func (p *DeleteCommentResult) Read(iprot thrift.TProtocol) error {
+	if _, err := iprot.ReadStructBegin(); err != nil {
+		return fmt.Errorf("%T read error: %s", p, err)
+	}
+	for {
+		_, fieldTypeId, fieldId, err := iprot.ReadFieldBegin()
+		if err != nil {
+			return fmt.Errorf("%T field %d read error: %s", p, fieldId, err)
+		}
+		if fieldTypeId == thrift.STOP {
+			break
+		}
+		switch fieldId {
+		case 0:
+			if err := p.ReadField0(iprot); err != nil {
+				return err
+			}
+		default:
+			if err := iprot.Skip(fieldTypeId); err != nil {
+				return err
+			}
+		}
+		if err := iprot.ReadFieldEnd(); err != nil {
+			return err
+		}
+	}
+	if err := iprot.ReadStructEnd(); err != nil {
+		return fmt.Errorf("%T read struct end error: %s", p, err)
+	}
+	return nil
+}
+
+func (p *DeleteCommentResult) ReadField0(iprot thrift.TProtocol) error {
+	if v, err := iprot.ReadBool(); err != nil {
+		return fmt.Errorf("error reading field 0: %s", err)
+	} else {
+		p.Success = &v
+	}
+	return nil
+}
+
+func (p *DeleteCommentResult) Write(oprot thrift.TProtocol) error {
+	if err := oprot.WriteStructBegin("deleteComment_result"); err != nil {
+		return fmt.Errorf("%T write struct begin error: %s", p, err)
+	}
+	if err := p.writeField0(oprot); err != nil {
+		return err
+	}
+	if err := oprot.WriteFieldStop(); err != nil {
+		return fmt.Errorf("write field stop error: %s", err)
+	}
+	if err := oprot.WriteStructEnd(); err != nil {
+		return fmt.Errorf("write struct stop error: %s", err)
+	}
+	return nil
+}
+
+func (p *DeleteCommentResult) writeField0(oprot thrift.TProtocol) (err error) {
+	if p.IsSetSuccess() {
+		if err := oprot.WriteFieldBegin("success", thrift.BOOL, 0); err != nil {
+			return fmt.Errorf("%T write field begin error 0:success: %s", p, err)
+		}
+		if err := oprot.WriteBool(bool(*p.Success)); err != nil {
+			return fmt.Errorf("%T.success (0) field write error: %s", p, err)
+		}
+		if err := oprot.WriteFieldEnd(); err != nil {
+			return fmt.Errorf("%T write field end error 0:success: %s", p, err)
+		}
+	}
+	return err
+}
+
+func (p *DeleteCommentResult) String() string {
+	if p == nil {
+		return "<nil>"
+	}
+	return fmt.Sprintf("DeleteCommentResult(%+v)", *p)
 }
 
 type GetArgs struct {
@@ -657,11 +936,11 @@ func (p *GetResult) ReadField0(iprot thrift.TProtocol) error {
 	tSlice := make([]*Com, 0, size)
 	p.Success = tSlice
 	for i := 0; i < size; i++ {
-		_elem6 := &Com{}
-		if err := _elem6.Read(iprot); err != nil {
-			return fmt.Errorf("%T error reading struct: %s", _elem6, err)
+		_elem8 := &Com{}
+		if err := _elem8.Read(iprot); err != nil {
+			return fmt.Errorf("%T error reading struct: %s", _elem8, err)
 		}
-		p.Success = append(p.Success, _elem6)
+		p.Success = append(p.Success, _elem8)
 	}
 	if err := iprot.ReadListEnd(); err != nil {
 		return fmt.Errorf("error reading list end: %s", err)

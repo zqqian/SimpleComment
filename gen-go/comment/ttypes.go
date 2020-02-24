@@ -17,10 +17,13 @@ var _ = bytes.Equal
 var GoUnusedProtection__ int
 
 type Com struct {
-	Id       int32  `thrift:"id,1" json:"id"`
-	Username string `thrift:"username,2" json:"username"`
-	Content  string `thrift:"content,3" json:"content"`
-	Time     string `thrift:"time,4" json:"time"`
+	Id        int32  `thrift:"id,1" json:"id"`
+	UserId    int32  `thrift:"user_id,2" json:"user_id"`
+	ArticleId int32  `thrift:"article_id,3" json:"article_id"`
+	ReplyId   int32  `thrift:"reply_id,4" json:"reply_id"`
+	Username  string `thrift:"username,5" json:"username"`
+	Content   string `thrift:"content,6" json:"content"`
+	Time      string `thrift:"time,7" json:"time"`
 }
 
 func NewCom() *Com {
@@ -29,6 +32,18 @@ func NewCom() *Com {
 
 func (p *Com) GetId() int32 {
 	return p.Id
+}
+
+func (p *Com) GetUserId() int32 {
+	return p.UserId
+}
+
+func (p *Com) GetArticleId() int32 {
+	return p.ArticleId
+}
+
+func (p *Com) GetReplyId() int32 {
+	return p.ReplyId
 }
 
 func (p *Com) GetUsername() string {
@@ -71,6 +86,18 @@ func (p *Com) Read(iprot thrift.TProtocol) error {
 			if err := p.ReadField4(iprot); err != nil {
 				return err
 			}
+		case 5:
+			if err := p.ReadField5(iprot); err != nil {
+				return err
+			}
+		case 6:
+			if err := p.ReadField6(iprot); err != nil {
+				return err
+			}
+		case 7:
+			if err := p.ReadField7(iprot); err != nil {
+				return err
+			}
 		default:
 			if err := iprot.Skip(fieldTypeId); err != nil {
 				return err
@@ -96,26 +123,53 @@ func (p *Com) ReadField1(iprot thrift.TProtocol) error {
 }
 
 func (p *Com) ReadField2(iprot thrift.TProtocol) error {
-	if v, err := iprot.ReadString(); err != nil {
+	if v, err := iprot.ReadI32(); err != nil {
 		return fmt.Errorf("error reading field 2: %s", err)
+	} else {
+		p.UserId = v
+	}
+	return nil
+}
+
+func (p *Com) ReadField3(iprot thrift.TProtocol) error {
+	if v, err := iprot.ReadI32(); err != nil {
+		return fmt.Errorf("error reading field 3: %s", err)
+	} else {
+		p.ArticleId = v
+	}
+	return nil
+}
+
+func (p *Com) ReadField4(iprot thrift.TProtocol) error {
+	if v, err := iprot.ReadI32(); err != nil {
+		return fmt.Errorf("error reading field 4: %s", err)
+	} else {
+		p.ReplyId = v
+	}
+	return nil
+}
+
+func (p *Com) ReadField5(iprot thrift.TProtocol) error {
+	if v, err := iprot.ReadString(); err != nil {
+		return fmt.Errorf("error reading field 5: %s", err)
 	} else {
 		p.Username = v
 	}
 	return nil
 }
 
-func (p *Com) ReadField3(iprot thrift.TProtocol) error {
+func (p *Com) ReadField6(iprot thrift.TProtocol) error {
 	if v, err := iprot.ReadString(); err != nil {
-		return fmt.Errorf("error reading field 3: %s", err)
+		return fmt.Errorf("error reading field 6: %s", err)
 	} else {
 		p.Content = v
 	}
 	return nil
 }
 
-func (p *Com) ReadField4(iprot thrift.TProtocol) error {
+func (p *Com) ReadField7(iprot thrift.TProtocol) error {
 	if v, err := iprot.ReadString(); err != nil {
-		return fmt.Errorf("error reading field 4: %s", err)
+		return fmt.Errorf("error reading field 7: %s", err)
 	} else {
 		p.Time = v
 	}
@@ -136,6 +190,15 @@ func (p *Com) Write(oprot thrift.TProtocol) error {
 		return err
 	}
 	if err := p.writeField4(oprot); err != nil {
+		return err
+	}
+	if err := p.writeField5(oprot); err != nil {
+		return err
+	}
+	if err := p.writeField6(oprot); err != nil {
+		return err
+	}
+	if err := p.writeField7(oprot); err != nil {
 		return err
 	}
 	if err := oprot.WriteFieldStop(); err != nil {
@@ -161,40 +224,79 @@ func (p *Com) writeField1(oprot thrift.TProtocol) (err error) {
 }
 
 func (p *Com) writeField2(oprot thrift.TProtocol) (err error) {
-	if err := oprot.WriteFieldBegin("username", thrift.STRING, 2); err != nil {
-		return fmt.Errorf("%T write field begin error 2:username: %s", p, err)
+	if err := oprot.WriteFieldBegin("user_id", thrift.I32, 2); err != nil {
+		return fmt.Errorf("%T write field begin error 2:user_id: %s", p, err)
 	}
-	if err := oprot.WriteString(string(p.Username)); err != nil {
-		return fmt.Errorf("%T.username (2) field write error: %s", p, err)
+	if err := oprot.WriteI32(int32(p.UserId)); err != nil {
+		return fmt.Errorf("%T.user_id (2) field write error: %s", p, err)
 	}
 	if err := oprot.WriteFieldEnd(); err != nil {
-		return fmt.Errorf("%T write field end error 2:username: %s", p, err)
+		return fmt.Errorf("%T write field end error 2:user_id: %s", p, err)
 	}
 	return err
 }
 
 func (p *Com) writeField3(oprot thrift.TProtocol) (err error) {
-	if err := oprot.WriteFieldBegin("content", thrift.STRING, 3); err != nil {
-		return fmt.Errorf("%T write field begin error 3:content: %s", p, err)
+	if err := oprot.WriteFieldBegin("article_id", thrift.I32, 3); err != nil {
+		return fmt.Errorf("%T write field begin error 3:article_id: %s", p, err)
 	}
-	if err := oprot.WriteString(string(p.Content)); err != nil {
-		return fmt.Errorf("%T.content (3) field write error: %s", p, err)
+	if err := oprot.WriteI32(int32(p.ArticleId)); err != nil {
+		return fmt.Errorf("%T.article_id (3) field write error: %s", p, err)
 	}
 	if err := oprot.WriteFieldEnd(); err != nil {
-		return fmt.Errorf("%T write field end error 3:content: %s", p, err)
+		return fmt.Errorf("%T write field end error 3:article_id: %s", p, err)
 	}
 	return err
 }
 
 func (p *Com) writeField4(oprot thrift.TProtocol) (err error) {
-	if err := oprot.WriteFieldBegin("time", thrift.STRING, 4); err != nil {
-		return fmt.Errorf("%T write field begin error 4:time: %s", p, err)
+	if err := oprot.WriteFieldBegin("reply_id", thrift.I32, 4); err != nil {
+		return fmt.Errorf("%T write field begin error 4:reply_id: %s", p, err)
 	}
-	if err := oprot.WriteString(string(p.Time)); err != nil {
-		return fmt.Errorf("%T.time (4) field write error: %s", p, err)
+	if err := oprot.WriteI32(int32(p.ReplyId)); err != nil {
+		return fmt.Errorf("%T.reply_id (4) field write error: %s", p, err)
 	}
 	if err := oprot.WriteFieldEnd(); err != nil {
-		return fmt.Errorf("%T write field end error 4:time: %s", p, err)
+		return fmt.Errorf("%T write field end error 4:reply_id: %s", p, err)
+	}
+	return err
+}
+
+func (p *Com) writeField5(oprot thrift.TProtocol) (err error) {
+	if err := oprot.WriteFieldBegin("username", thrift.STRING, 5); err != nil {
+		return fmt.Errorf("%T write field begin error 5:username: %s", p, err)
+	}
+	if err := oprot.WriteString(string(p.Username)); err != nil {
+		return fmt.Errorf("%T.username (5) field write error: %s", p, err)
+	}
+	if err := oprot.WriteFieldEnd(); err != nil {
+		return fmt.Errorf("%T write field end error 5:username: %s", p, err)
+	}
+	return err
+}
+
+func (p *Com) writeField6(oprot thrift.TProtocol) (err error) {
+	if err := oprot.WriteFieldBegin("content", thrift.STRING, 6); err != nil {
+		return fmt.Errorf("%T write field begin error 6:content: %s", p, err)
+	}
+	if err := oprot.WriteString(string(p.Content)); err != nil {
+		return fmt.Errorf("%T.content (6) field write error: %s", p, err)
+	}
+	if err := oprot.WriteFieldEnd(); err != nil {
+		return fmt.Errorf("%T write field end error 6:content: %s", p, err)
+	}
+	return err
+}
+
+func (p *Com) writeField7(oprot thrift.TProtocol) (err error) {
+	if err := oprot.WriteFieldBegin("time", thrift.STRING, 7); err != nil {
+		return fmt.Errorf("%T write field begin error 7:time: %s", p, err)
+	}
+	if err := oprot.WriteString(string(p.Time)); err != nil {
+		return fmt.Errorf("%T.time (7) field write error: %s", p, err)
+	}
+	if err := oprot.WriteFieldEnd(); err != nil {
+		return fmt.Errorf("%T write field end error 7:time: %s", p, err)
 	}
 	return err
 }

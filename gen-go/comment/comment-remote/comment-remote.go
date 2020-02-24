@@ -20,7 +20,8 @@ func Usage() {
 	fmt.Fprintln(os.Stderr, "Usage of ", os.Args[0], " [-h host:port] [-u url] [-f[ramed]] function [arg1 [arg2...]]:")
 	flag.PrintDefaults()
 	fmt.Fprintln(os.Stderr, "\nFunctions:")
-	fmt.Fprintln(os.Stderr, "  bool add(string name, string content)")
+	fmt.Fprintln(os.Stderr, "  bool addComment(com c)")
+	fmt.Fprintln(os.Stderr, "  bool deleteComment(i32 comment_id)")
 	fmt.Fprintln(os.Stderr, "   get()")
 	fmt.Fprintln(os.Stderr)
 	os.Exit(0)
@@ -116,16 +117,44 @@ func main() {
 	}
 
 	switch cmd {
-	case "add":
-		if flag.NArg()-1 != 2 {
-			fmt.Fprintln(os.Stderr, "Add requires 2 args")
+	case "addComment":
+		if flag.NArg()-1 != 1 {
+			fmt.Fprintln(os.Stderr, "AddComment requires 1 args")
 			flag.Usage()
 		}
-		argvalue0 := flag.Arg(1)
+		arg9 := flag.Arg(1)
+		mbTrans10 := thrift.NewTMemoryBufferLen(len(arg9))
+		defer mbTrans10.Close()
+		_, err11 := mbTrans10.WriteString(arg9)
+		if err11 != nil {
+			Usage()
+			return
+		}
+		factory12 := thrift.NewTSimpleJSONProtocolFactory()
+		jsProt13 := factory12.GetProtocol(mbTrans10)
+		argvalue0 := comment.NewCom()
+		err14 := argvalue0.Read(jsProt13)
+		if err14 != nil {
+			Usage()
+			return
+		}
 		value0 := argvalue0
-		argvalue1 := flag.Arg(2)
-		value1 := argvalue1
-		fmt.Print(client.Add(value0, value1))
+		fmt.Print(client.AddComment(value0))
+		fmt.Print("\n")
+		break
+	case "deleteComment":
+		if flag.NArg()-1 != 1 {
+			fmt.Fprintln(os.Stderr, "DeleteComment requires 1 args")
+			flag.Usage()
+		}
+		tmp0, err15 := (strconv.Atoi(flag.Arg(1)))
+		if err15 != nil {
+			Usage()
+			return
+		}
+		argvalue0 := int32(tmp0)
+		value0 := argvalue0
+		fmt.Print(client.DeleteComment(value0))
 		fmt.Print("\n")
 		break
 	case "get":
