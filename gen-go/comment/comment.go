@@ -23,7 +23,8 @@ type Comment interface {
 	DeleteComment(comment_id int32) (r bool, err error)
 	// Parameters:
 	//  - ReplyId
-	Get(replyId int32) (r []*Com, err error)
+	//  - ArticleId
+	Get(replyId int32, article_id int32) (r []*Com, err error)
 }
 
 type CommentClient struct {
@@ -192,14 +193,15 @@ func (p *CommentClient) recvDeleteComment() (value bool, err error) {
 
 // Parameters:
 //  - ReplyId
-func (p *CommentClient) Get(replyId int32) (r []*Com, err error) {
-	if err = p.sendGet(replyId); err != nil {
+//  - ArticleId
+func (p *CommentClient) Get(replyId int32, article_id int32) (r []*Com, err error) {
+	if err = p.sendGet(replyId, article_id); err != nil {
 		return
 	}
 	return p.recvGet()
 }
 
-func (p *CommentClient) sendGet(replyId int32) (err error) {
+func (p *CommentClient) sendGet(replyId int32, article_id int32) (err error) {
 	oprot := p.OutputProtocol
 	if oprot == nil {
 		oprot = p.ProtocolFactory.GetProtocol(p.Transport)
@@ -210,7 +212,8 @@ func (p *CommentClient) sendGet(replyId int32) (err error) {
 		return
 	}
 	args := GetArgs{
-		ReplyId: replyId,
+		ReplyId:   replyId,
+		ArticleId: article_id,
 	}
 	if err = args.Write(oprot); err != nil {
 		return
@@ -421,7 +424,7 @@ func (p *commentProcessorGet) Process(seqId int32, iprot, oprot thrift.TProtocol
 	result := GetResult{}
 	var retval []*Com
 	var err2 error
-	if retval, err2 = p.handler.Get(args.ReplyId); err2 != nil {
+	if retval, err2 = p.handler.Get(args.ReplyId, args.ArticleId); err2 != nil {
 		x := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing get: "+err2.Error())
 		oprot.WriteMessageBegin("get", thrift.EXCEPTION, seqId)
 		x.Write(oprot)
@@ -834,7 +837,8 @@ func (p *DeleteCommentResult) String() string {
 }
 
 type GetArgs struct {
-	ReplyId int32 `thrift:"replyId,1" json:"replyId"`
+	ReplyId   int32 `thrift:"replyId,1" json:"replyId"`
+	ArticleId int32 `thrift:"article_id,2" json:"article_id"`
 }
 
 func NewGetArgs() *GetArgs {
@@ -843,6 +847,10 @@ func NewGetArgs() *GetArgs {
 
 func (p *GetArgs) GetReplyId() int32 {
 	return p.ReplyId
+}
+
+func (p *GetArgs) GetArticleId() int32 {
+	return p.ArticleId
 }
 func (p *GetArgs) Read(iprot thrift.TProtocol) error {
 	if _, err := iprot.ReadStructBegin(); err != nil {
@@ -859,6 +867,10 @@ func (p *GetArgs) Read(iprot thrift.TProtocol) error {
 		switch fieldId {
 		case 1:
 			if err := p.ReadField1(iprot); err != nil {
+				return err
+			}
+		case 2:
+			if err := p.ReadField2(iprot); err != nil {
 				return err
 			}
 		default:
@@ -885,11 +897,23 @@ func (p *GetArgs) ReadField1(iprot thrift.TProtocol) error {
 	return nil
 }
 
+func (p *GetArgs) ReadField2(iprot thrift.TProtocol) error {
+	if v, err := iprot.ReadI32(); err != nil {
+		return fmt.Errorf("error reading field 2: %s", err)
+	} else {
+		p.ArticleId = v
+	}
+	return nil
+}
+
 func (p *GetArgs) Write(oprot thrift.TProtocol) error {
 	if err := oprot.WriteStructBegin("get_args"); err != nil {
 		return fmt.Errorf("%T write struct begin error: %s", p, err)
 	}
 	if err := p.writeField1(oprot); err != nil {
+		return err
+	}
+	if err := p.writeField2(oprot); err != nil {
 		return err
 	}
 	if err := oprot.WriteFieldStop(); err != nil {
@@ -910,6 +934,19 @@ func (p *GetArgs) writeField1(oprot thrift.TProtocol) (err error) {
 	}
 	if err := oprot.WriteFieldEnd(); err != nil {
 		return fmt.Errorf("%T write field end error 1:replyId: %s", p, err)
+	}
+	return err
+}
+
+func (p *GetArgs) writeField2(oprot thrift.TProtocol) (err error) {
+	if err := oprot.WriteFieldBegin("article_id", thrift.I32, 2); err != nil {
+		return fmt.Errorf("%T write field begin error 2:article_id: %s", p, err)
+	}
+	if err := oprot.WriteI32(int32(p.ArticleId)); err != nil {
+		return fmt.Errorf("%T.article_id (2) field write error: %s", p, err)
+	}
+	if err := oprot.WriteFieldEnd(); err != nil {
+		return fmt.Errorf("%T write field end error 2:article_id: %s", p, err)
 	}
 	return err
 }

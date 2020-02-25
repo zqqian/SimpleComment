@@ -55,10 +55,10 @@ func (c *CommentServer) AddComment(cc *comment.Com) (r bool, err error) {//添�
 		return false,err
 	}
 }
-func (c *CommentServer)Get(replyId int32) (r []*comment.Com, err error){//获取评论列表
+func (c *CommentServer)Get(replyId int32,article_id int32) (r []*comment.Com, err error){//获取评论列表
 	db:=models.Sqlconn()
 	defer db.Close()
-	sql:="SELECT id,comment.userid,user.username,context,time FROM `comment`,`user` WHERE comment.userid=user.userid and reply_id="+strconv.Itoa(int(replyId))
+	sql:="SELECT id,comment.userid,user.username,context,time FROM `comment`,`user` WHERE comment.userid=user.userid and reply_id="+strconv.Itoa(int(replyId))+"and artile_id="+strconv.Itoa(int(article_id))
 	fmt.Println(sql)
 	rows, err := db.Query(sql)
 	if err != nil {

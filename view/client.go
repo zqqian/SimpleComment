@@ -35,7 +35,7 @@ func Addcomment(user_id int32, article_id int32, reply_id int32, content string)
 		return false,err
 	}
 }
-func Getcomment(replyId int) ([]*comment.Com,error) {
+func Getcomment(replyId int,article_id int32) ([]*comment.Com,error) {
 
 	client,err:=	runClient()
 	if err != nil {
@@ -43,7 +43,7 @@ func Getcomment(replyId int) ([]*comment.Com,error) {
 		return nil,err
 	}
 	var r []*comment.Com
-	r,err=client.Get(int32(replyId) )
+	r,err=client.Get(int32(replyId), int32(article_id))
 	if err!=nil{
 		panic(err)
 		return nil,err

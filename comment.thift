@@ -12,5 +12,5 @@ struct com{
 service Comment {
     bool addComment(1:com c),
     bool deleteComment(1:i32 comment_id),
-	list<com> get(1:i32 replyId)
+	list<com> get(1:i32 replyId,2:i32 article_id)
 }

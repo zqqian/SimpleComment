@@ -36,16 +36,16 @@ func showcomment(w http.ResponseWriter, r *http.Request) {
 
 func comment_web(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
-	val:=0
+	rep:=0
 	if value, ok := r.Form["reply"];ok{
-		val,_=strconv.Atoi(value[0])
+		rep,_=strconv.Atoi(value[0])
 	}
 	if r.Method == "GET" {
 		t, _ := template.ParseFiles("view/comment_web.gtpl")
-		log.Println(t.Execute(w, val))
+		log.Println(t.Execute(w, rep))
 	} else {
 		ss,_:=strconv.Atoi(r.Form["userid"][0])
-		view.Addcomment(int32(ss),1,int32(val),r.Form["content"][0])
+		view.Addcomment(int32(ss),1,int32(rep),r.Form["content"][0])
 		http.Redirect(w,r,"/",301)
 	}
 }
