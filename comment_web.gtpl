@@ -3,7 +3,7 @@
 <title></title>
 </head>
 <body>
-<form action="/comment" method="post">
+<form action="/comment?reply={{.}}" method="post">
     用户id:<input type="text" name="userid">
     评论内容:<input type="text" name="content">
     <input type="submit" value="发表">

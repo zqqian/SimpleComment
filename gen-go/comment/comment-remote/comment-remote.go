@@ -22,7 +22,7 @@ func Usage() {
 	fmt.Fprintln(os.Stderr, "\nFunctions:")
 	fmt.Fprintln(os.Stderr, "  bool addComment(com c)")
 	fmt.Fprintln(os.Stderr, "  bool deleteComment(i32 comment_id)")
-	fmt.Fprintln(os.Stderr, "   get()")
+	fmt.Fprintln(os.Stderr, "   get(i32 replyId)")
 	fmt.Fprintln(os.Stderr)
 	os.Exit(0)
 }
@@ -158,11 +158,18 @@ func main() {
 		fmt.Print("\n")
 		break
 	case "get":
-		if flag.NArg()-1 != 0 {
-			fmt.Fprintln(os.Stderr, "Get requires 0 args")
+		if flag.NArg()-1 != 1 {
+			fmt.Fprintln(os.Stderr, "Get requires 1 args")
 			flag.Usage()
 		}
-		fmt.Print(client.Get())
+		tmp0, err16 := (strconv.Atoi(flag.Arg(1)))
+		if err16 != nil {
+			Usage()
+			return
+		}
+		argvalue0 := int32(tmp0)
+		value0 := argvalue0
+		fmt.Print(client.Get(value0))
 		fmt.Print("\n")
 		break
 	case "":

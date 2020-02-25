@@ -2,16 +2,17 @@ package view
 
 import (
 	"SimpleComment/gen-go/comment"
+	"fmt"
 	"git.apache.org/thrift.git/lib/go/thrift"
 )
 
 
-func Addcomment(user_id int32, article_id int32, reply_id int32, content string)  bool{
+func Addcomment(user_id int32, article_id int32, reply_id int32, content string)  (bool,error){
 
 	client,err:=	runClient()
 	if err != nil {
 		panic(err)
-		return false
+		return false,err
 	}
 
 	var res bool
@@ -25,16 +26,16 @@ func Addcomment(user_id int32, article_id int32, reply_id int32, content string)
 
 	if err != nil {
 		panic(err)
-		return false
+		return false,err
 	}
 	println("success")
 	if(res){
-		return true
+		return true,nil
 	}else{
-		return false
+		return false,err
 	}
 }
-func Getcomment() ([]*comment.Com,error) {
+func Getcomment(replyId int) ([]*comment.Com,error) {
 
 	client,err:=	runClient()
 	if err != nil {
@@ -42,12 +43,26 @@ func Getcomment() ([]*comment.Com,error) {
 		return nil,err
 	}
 	var r []*comment.Com
-	r,err=client.Get()
+	r,err=client.Get(int32(replyId) )
 	if err!=nil{
 		panic(err)
 		return nil,err
 	}
 	return r,nil
+}
+func DelteComment(id int)bool{
+	client,err:=	runClient()
+	if err != nil {
+		panic(err)
+		return false
+	}
+	fmt.Println(int32(id))
+
+	r,err:=client.DeleteComment(int32(id))
+	if r{
+		return true
+	}
+		return false
 }
 func runClient() (*comment.CommentClient,error) {
 	transportFactory := thrift.NewTBufferedTransportFactory(8192)
@@ -67,20 +82,3 @@ func runClient() (*comment.CommentClient,error) {
 	}
 	return comment.NewCommentClientFactory(transport, protocolFactory),nil
 }
-//func main() {
-//
-//	Addcomment(1,1,0,"111")
-//
-// 	r,err :=Getcomment()
-//
-//	 if err!=nil{
-//		panic(err)
-//	}
-//	for _,s:=range r {
-//		println(s.Username)
-//		println(s.Content)
-//		println(s.Id)
-//		println(s.Time)
-//	}
-//
-//}
