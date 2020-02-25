@@ -41,7 +41,7 @@ func comment_web(w http.ResponseWriter, r *http.Request) {
 		val,_=strconv.Atoi(value[0])
 	}
 	if r.Method == "GET" {
-		t, _ := template.ParseFiles("comment_web.gtpl")
+		t, _ := template.ParseFiles("view/comment_web.gtpl")
 		log.Println(t.Execute(w, val))
 	} else {
 		ss,_:=strconv.Atoi(r.Form["userid"][0])
